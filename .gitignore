@@ -1,0 +1,25 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Hardhat build output
+artifacts/
+cache/
+typechain-types/
+coverage/
+coverage.json
+
+# Frontend build output
+frontend/dist/
+
+# Demo campaign secrets written by the seed script (local demo only)
+demo-secrets/
+
+# OS / editor
+.DS_Store
+*.log
+deployments/localhost.json
