@@ -15,7 +15,11 @@
     "noEmit": true,
     "types": ["vite/client"],
     "baseUrl": ".",
-    "paths": { "@shared/*": ["../shared/*"] }
+    "paths": {
+      "@shared/*": ["../shared/*"],
+      // ../shared imports ethers; on Vercel only frontend/node_modules exists, so resolve it here.
+      "ethers": ["./node_modules/ethers"]
+    }
   },
   "include": ["src", "../shared", "vite.config.ts"]
 }

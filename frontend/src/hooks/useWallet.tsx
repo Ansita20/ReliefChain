@@ -75,6 +75,44 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, [ethereum]);
 
+  const switchChain = useCallback(
+    async (chainId: number) => {
+      if (!ethereum) return;
+      const hexId = `0x${chainId.toString(16)}`;
+      setError(null);
+      try {
+        await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hexId }] });
+      } catch (err) {
+        // MetaMask doesn't know the local network yet (usually error 4902, but some versions
+        // report it differently), so offer to add it. 4001 means the user pressed Reject.
+        // Sepolia is built into MetaMask, but other wallets may need it added too.
+        const rejected = (err as { code?: number }).code === 4001;
+        const chain = CHAINS[chainId];
+        if (!rejected && chain) {
+          try {
+            await ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: hexId,
+                  chainName: chain.name,
+                  rpcUrls: [chain.walletRpcUrl],
+                  nativeCurrency: { name: chainId === LOCAL_CHAIN_ID ? "Ether" : "Sepolia Ether", symbol: "ETH", decimals: 18 },
+                  ...(chain.explorerUrl ? { blockExplorerUrls: [chain.explorerUrl] } : {}),
+                },
+              ],
+            });
+          } catch (addErr) {
+            setError(friendlyError(addErr));
+          }
+        } else {
+          setError(friendlyError(err));
+        }
+      }
+    },
+    [ethereum],
+  );
+
   const connect = useCallback(async () => {
     if (!ethereum) {
       setError(
@@ -89,48 +127,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       const accounts = (await ethereum.request({ method: "eth_requestAccounts" })) as string[];
       setAccount(accounts[0] ?? null);
-      setWalletChainId(Number(await ethereum.request({ method: "eth_chainId" })));
+      const chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+      setWalletChainId(chainId);
+      // Connected on the wrong network: ask MetaMask to switch right away
+      // (the "Switch to …" banner stays as a fallback if the user dismisses it).
+      if (!isSupportedChain(chainId)) await switchChain(DEFAULT_CHAIN_ID);
     } catch (err) {
       setError(friendlyError(err));
     } finally {
       setConnecting(false);
     }
-  }, [ethereum]);
-
-  const switchChain = useCallback(
-    async (chainId: number) => {
-      if (!ethereum) return;
-      const hexId = `0x${chainId.toString(16)}`;
-      setError(null);
-      try {
-        await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hexId }] });
-      } catch (err) {
-        // MetaMask doesn't know the local network yet (usually error 4902, but some versions
-        // report it differently), so offer to add it. 4001 means the user pressed Reject.
-        const rejected = (err as { code?: number }).code === 4001;
-        if (!rejected && chainId === LOCAL_CHAIN_ID) {
-          try {
-            await ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [
-                {
-                  chainId: hexId,
-                  chainName: CHAINS[chainId].name,
-                  rpcUrls: [CHAINS[chainId].walletRpcUrl],
-                  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-                },
-              ],
-            });
-          } catch (addErr) {
-            setError(friendlyError(addErr));
-          }
-        } else {
-          setError(friendlyError(err));
-        }
-      }
-    },
-    [ethereum],
-  );
+  }, [ethereum, switchChain]);
 
   const value = useMemo<WalletContextValue>(() => {
     const supported = isSupportedChain(walletChainId);

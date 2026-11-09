@@ -58,7 +58,9 @@ export interface RegistryEvent {
 }
 
 // Many public RPC nodes refuse log queries that span too many blocks, so we ask in chunks.
+// publicnode.com accepts 9,000; if an RPC refuses, the range is halved down to MIN_BLOCK_CHUNK.
 const BLOCK_CHUNK = 9_000;
+const MIN_BLOCK_CHUNK = 500;
 
 // Block number -> timestamp, so each block is only fetched once.
 const blockTimes = new Map<string, number>();
@@ -189,9 +191,19 @@ export async function fetchEvents(chainId: number, fromBlock: number, toBlock: n
   const contract: Contract = getReadContract(chainId);
   const result: RegistryEvent[] = [];
 
-  for (let start = fromBlock; start <= toBlock; start += BLOCK_CHUNK) {
-    const end = Math.min(start + BLOCK_CHUNK - 1, toBlock);
-    const logs = await contract.queryFilter("*", start, end);
+  let chunk = BLOCK_CHUNK;
+  for (let start = fromBlock; start <= toBlock; ) {
+    const end = Math.min(start + chunk - 1, toBlock);
+    let logs;
+    try {
+      logs = await contract.queryFilter("*", start, end);
+    } catch (err) {
+      // Stricter RPCs reject wide ranges ("block range too large"): retry smaller.
+      if (chunk <= MIN_BLOCK_CHUNK) throw err;
+      chunk = Math.max(MIN_BLOCK_CHUNK, Math.floor(chunk / 2));
+      continue;
+    }
+    start = end + 1;
     const parsed = await Promise.all(
       logs.filter((l): l is EventLog => l instanceof EventLog).map((l) => toRegistryEvent(chainId, l)),
     );
