@@ -10,6 +10,16 @@ Agencies get the answer without anyone seeing a name or an ID number, and withou
 - **Frontend:** React 19, Vite 8, TypeScript, ethers v6, MetaMask, Recharts
 - **Results:** 40 tests passing, 100% line and branch coverage, and batching saves 51–58% gas from 10 records up
 
+### Live deployment (Sepolia testnet)
+
+| | |
+|---|---|
+| **Web app** | https://reliefchain-nu.vercel.app |
+| **Contract** | [`0xc252A3D84435B588b32d5b8C8dBf65dA38A9b317`](https://sepolia.etherscan.io/address/0xc252A3D84435B588b32d5b8C8dBf65dA38A9b317) (ReliefRegistry, deployed in block 12098519) |
+| **Network** | Sepolia, chain ID 11155111 |
+
+The Dashboard works without a wallet. To record distributions, connect MetaMask; the app asks it to switch to Sepolia.
+
 ---
 
 ## 1. Problem
@@ -181,6 +191,20 @@ npm run frontend:dev    # http://localhost:5173
 4. Start the frontend with `VITE_DEFAULT_CHAIN_ID=11155111` (see [`frontend/.env.example`](frontend/.env.example)). Transactions then show an Etherscan link.
 
 The deploy script writes the address and ABI into `frontend/src/contracts/`, so the frontend picks up new deployments automatically.
+
+### Hosting the frontend (Vercel)
+The live app is a Vercel project with **Root Directory = `frontend`** and "include files outside the root directory" on, because the frontend imports [`shared/`](shared/). Deploy from the **repo root** (`npx vercel --prod`); [`.vercelignore`](.vercelignore) uploads only `frontend/` and `shared/`, never `.env` or `demo-secrets/`.
+
+Set these on the Vercel project (Production). When `VITE_CHAIN_ID` is set, the app is pinned to that chain and ignores the local Hardhat entry:
+
+| Variable | Live value |
+|---|---|
+| `VITE_CHAIN_ID` | `11155111` |
+| `VITE_CONTRACT_ADDRESS` | `0xc252A3D84435B588b32d5b8C8dBf65dA38A9b317` |
+| `VITE_DEPLOY_BLOCK` | `12098519` |
+| `VITE_RPC_URL` | `https://ethereum-sepolia-rpc.publicnode.com` |
+
+Routing uses `#/` hashes, so no SPA rewrite is needed.
 
 ## 6. Tests and gas
 
