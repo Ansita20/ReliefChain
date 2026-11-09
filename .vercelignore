@@ -1,0 +1,10 @@
+# Vercel builds only the frontend (Root Directory = frontend), which imports ../shared.
+# Upload just those two folders: never .env, demo-secrets/, contracts or root node_modules.
+/*
+!/frontend
+!/shared
+/frontend/node_modules
+/frontend/dist
+/frontend/.env
+/frontend/.env.*
+!/frontend/.env.example
