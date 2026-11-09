@@ -3,5 +3,10 @@
     "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
     "deployBlock": 19,
     "network": "localhost"
+  },
+  "11155111": {
+    "address": "0xc252A3D84435B588b32d5b8C8dBf65dA38A9b317",
+    "deployBlock": 12098519,
+    "network": "sepolia"
   }
 }
