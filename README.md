@@ -8,7 +8,7 @@ Agencies get the answer without anyone seeing a name or an ID number, and withou
 
 - **Smart contract:** Solidity 0.8.30, Hardhat 2, OpenZeppelin 5 `AccessControl`
 - **Frontend:** React 19, Vite 8, TypeScript, ethers v6, MetaMask, Recharts
-- **Results:** 40 tests passing, 100% line and branch coverage, and batching saves 51–58% gas from 10 records up
+- **Results:** 63 tests passing, 100% line and branch coverage, and batching saves 51–58% gas from 10 records up
 
 ### Live deployment (Sepolia testnet)
 
